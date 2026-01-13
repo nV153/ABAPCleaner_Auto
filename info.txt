@@ -1,0 +1,63 @@
+ABAP Cleaner Writeback Tool
+
+Dieses Python-Programm dient dazu, ABAP-Quellcode automatisiert über die SAP ADT-Schnittstelle
+zu lesen, mit abap-cleaner zu bereinigen und optional zurück ins SAP-System zu schreiben.
+
+Das Tool ist für die Batch-Verarbeitung vieler Programme ausgelegt. Jedes Objekt wird
+unabhängig verarbeitet, sodass Fehler einzelner Programme den Gesamtlauf nicht abbrechen.
+
+
+Technischer Ablauf
+
+1. Verbindung und Authentifizierung
+Der Zugriff auf das SAP-System erfolgt über HTTPS über die ADT-Basis-URL (/sap/bc/adt).
+Die Authentifizierung erfolgt per HTTP Basic Auth.
+Die Zugangsdaten werden über die Environment-Variablen SAP_USER und SAP_PASS bereitgestellt.
+Optional kann die Zertifikatsprüfung deaktiviert werden (--insecure).
+
+2. Lesen der ABAP-Quelle
+Für jedes angegebene Programm wird ein HTTP GET auf den ADT-Endpoint ausgeführt, z. B.:
+/sap/bc/adt/programs/programs/Z_TEST1/source/main
+
+Der ABAP-Quellcode wird als Text gelesen.
+Zusätzlich wird der HTTP-ETag aus der Response gespeichert, um konkurrierende Änderungen
+beim späteren Zurückschreiben zu erkennen.
+
+3. Bereinigung mit abap-cleaner
+Der gelesene Quellcode wird temporär in eine Datei geschrieben.
+Das abap-cleaner Standalone-Tool wird per Kommandozeilenaufruf ausgeführt.
+Ein konfigurierbares Cleaner-Profil (.cfj) definiert die anzuwendenden Regeln.
+Das bereinigte Ergebnis wird aus der Standardausgabe gelesen und weiterverarbeitet.
+
+4. Writeback ins SAP-System
+Im Writeback-Modus wird zunächst ein X-CSRF-Token vom ADT-Service ermittelt.
+Der bereinigte Code wird anschließend per HTTP PUT zurückgeschrieben.
+Das Schreiben erfolgt in die inactive version des Objekts.
+Der zu verwendende Transportauftrag wird über den Parameter corrNr übergeben.
+Transport- und Lock-Prüfungen erfolgen serverseitig durch SAP.
+
+5. Aktivierung (optional)
+Nach erfolgreichem Writeback kann das Objekt über den ADT-Aktivierungsservice aktiviert werden.
+Aktivierungsfehler werden separat erkannt und protokolliert.
+
+
+Fehlerbehandlung
+
+Jedes Programm wird einzeln verarbeitet.
+Fehler wie nicht vorhandene Objekte, Transport-Locks oder fehlende Berechtigungen
+führen nicht zum Abbruch des gesamten Laufs.
+Fehlgeschlagene Objekte werden in Log-Dateien protokolliert.
+Zusätzlich kann eine Retry-Datei mit den betroffenen URLs erzeugt werden.
+
+
+Eingabe der Programme
+
+Programme können entweder direkt per Kommandozeile über mehrere --url-Parameter
+oder über eine Textdatei (--urls-file) mit einer URL pro Zeile angegeben werden.
+Beide Varianten sind kombinierbar.
+
+
+Ziel
+
+Das Tool ermöglicht eine kontrollierte, reproduzierbare und skalierbare Bereinigung
+von ABAP-Programmen unter Berücksichtigung der ADT-, Transport- und Lock-Mechanismen.
