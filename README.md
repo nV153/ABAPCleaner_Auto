@@ -18,7 +18,7 @@ Programm Argumente
 
 Beispiel für Zirrus Intern:
 python script_writeback.py `
-  --base "https://87.106.51.212:50001/sap/bc/adt" `
+  --base "https://ip:port/sap/bc/adt" `
   --client 001 `
   --insecure `
   --mode test `
