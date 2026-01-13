@@ -26,3 +26,5 @@ python script_writeback.py `
   --urls-file urls.txt
 
 Die entsprechende URLs werden in einer txt-Datei zeilenweise hinterlegt.
+
+Nach Ausführen des Programms werden im Output Ordner Fehler bzw. Ergebnisse des Testmodus angezeigt.
