@@ -3,8 +3,8 @@
 Der Standalone ABAP Cleaner muss installiert werden und der entsprechende Pfad am Anfang entsprechend aktualisiert werden.
 
 Vorm ausführen des Programms müssen Login Daten als Umgebungsvariabeln gesetzt werden:
-$env:SAP_USER = "DEVELOPER"
-$env:SAP_PASS = "ABAPtr2023#00"
+$env:SAP_USER = "USER"
+$env:SAP_PASS = "PASSWORD"
 
 Zum Ausführen des Programms:
 
