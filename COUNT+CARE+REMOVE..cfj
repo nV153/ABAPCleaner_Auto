@@ -171,7 +171,7 @@
         "MeasureForVarsNeverUsed": "0",
         "MeasureForAssignedVars": "0",
         "MeasureForConstantsNeverUsed": "0",
-        "MeasureForVarsOnlyUsedInComment": "1",
+        "MeasureForVarsOnlyUsedInComment": "0",
         "MeasureForAssignedVarsOnlyUsedInComment": "0",
         "MeasureForVarsOnlyAssignedInMessageInto": "0"
       }
@@ -234,7 +234,7 @@
     },
     {
       "ruleID": "EMPTY_SECTIONS",
-      "isActive": false,
+      "isActive": true,
       "settingCount": 1,
       "settings": {
         "EmptySectionsMeasure": "1"

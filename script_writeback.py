@@ -269,7 +269,7 @@ def main():
     ap.add_argument("--base", required=True, help="Base ADT URL, e.g. https://host:port/sap/bc/adt")
     ap.add_argument("--client", default=SAP_CLIENT_DEFAULT)
     ap.add_argument("--release", default="757")
-    ap.add_argument("--profile", default=str(Path(__file__).resolve().parent / "COUNT+CARE.cfj2"))
+    ap.add_argument("--profile", default=str(Path(__file__).resolve().parent / "COUNT+CARE+REMOVE.cfj"))
     ap.add_argument("--cleaner", default=CLEANER_DEFAULT)
     ap.add_argument("--outdir", default=str(Path(__file__).resolve().parent / "outputs"))
     ap.add_argument("--insecure", action="store_true")
