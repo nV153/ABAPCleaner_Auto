@@ -3,8 +3,8 @@
 Der Standalone ABAP Cleaner muss installiert werden und der entsprechende Pfad am Anfang entsprechend aktualisiert werden.
 
 Vorm ausführen des Programms müssen Login Daten als Umgebungsvariabeln gesetzt werden:
-$env:SAP_USER = "DEVELOPER"
-$env:SAP_PASS = "ABAPtr2023#00"
+$env:SAP_USER = "USER"
+$env:SAP_PASS = "PASSWORD"
 
 Zum Ausführen des Programms:
 
@@ -18,7 +18,7 @@ Programm Argumente
 
 Beispiel für Zirrus Intern:
 python script_writeback.py `
-  --base "https://87.106.51.212:50001/sap/bc/adt" `
+  --base "https://ip:port/sap/bc/adt" `
   --client 001 `
   --insecure `
   --mode test `
@@ -26,3 +26,5 @@ python script_writeback.py `
   --urls-file urls.txt
 
 Die entsprechende URLs werden in einer txt-Datei zeilenweise hinterlegt.
+
+Nach Ausführen des Programms werden im Output Ordner Fehler bzw. Ergebnisse des Testmodus angezeigt.
