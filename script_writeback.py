@@ -266,7 +266,7 @@ def adt_activate_via_service(session, base: str, obj_url: str, client: str, csrf
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--base", required=True, help="Base ADT URL, e.g. https://host:port/sap/bc/adt")
+    ap.add_argument("--base", required=True, help="Base ADT URL, e.g. https://host:port")
     ap.add_argument("--client", default=SAP_CLIENT_DEFAULT)
     ap.add_argument("--release", default="757")
     ap.add_argument("--profile", default=str(Path(__file__).resolve().parent / "profile+REMOVE.cfj"))
