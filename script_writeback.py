@@ -11,7 +11,6 @@ import json
 from datetime import datetime
 import requests
 import shutil
-
 import urllib3
 
 
@@ -373,7 +372,7 @@ def main():
 
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
     fail_log = outdir / f"failures_{run_id}.txt"
-    fail_json = outdir / f"failures_{run_id}.jsonl"  # eine JSON-Zeile pro Fehler
+    fail_json = outdir / f"failures_{run_id}.jsonl" 
     retry_file = outdir / f"retry_urls_{run_id}.txt"
 
     failures = []
