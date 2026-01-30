@@ -296,13 +296,15 @@ def main():
     ap.add_argument("--cleaner", default=CLEANER_DEFAULT)
     ap.add_argument("--outdir", default=str(Path(__file__).resolve().parent / "outputs"))
     ap.add_argument("--insecure", action="store_true")
-
-    # NEW: mode switch
     ap.add_argument(
         "--mode",
-        choices=["test", "writeback"],
+        choices=["test", "writeback", "writeback_noact"],
         default="test",
-        help="test = wie bisher lokal speichern, writeback = cleaned Source per ADT ins SAP Objekt zurückschreiben"
+        help=(
+            "test = lokal speichern, "
+            "writeback = cleaned Source per ADT zurückschreiben + aktivieren, "
+            "writeback_noact = cleaned Source zurückschreiben, aber NICHT aktivieren"
+        )
     )
 
     # URLs input
@@ -360,7 +362,7 @@ def main():
     s.verify = (not args.insecure)
 
     csrf_token = None
-    if args.mode == "writeback":
+    if args.mode in ("writeback", "writeback_noact"):
         csrf_token = fetch_csrf_token(s, items[0].url, args.client)
 
     ok = 0
@@ -388,7 +390,7 @@ def main():
                 print(f"[ok] TEST  {it.url} -> {out_path}")
 
             else:
-                # writeback
+                # writeback / writeback_noact
                 assert csrf_token is not None
 
                 if not args.corrnr:
@@ -399,9 +401,9 @@ def main():
                 adt_put_text(s, put_url, args.client, cleaned, csrf_token, etag)
                 print(f"[ok] WRITE {put_url} -> updated on server")
 
-                # Aktivieren
-                adt_activate_via_service(s, base, it.url, args.client, csrf_token, args.corrnr)
-                print(f"[ok] ACTIVATE {it.label}")
+                if args.mode == "writeback":
+                    adt_activate_via_service(s, it.url, args.client, csrf_token, args.corrnr)
+                    print(f"[ok] ACTIVATE {it.label}")
 
             ok += 1
         except Exception as e:
@@ -420,7 +422,7 @@ def main():
             failures.append(entry)
             retry_urls.append(it.url)
 
-            print(f"[fail] {it.url} -> {msg}")
+            print(f"[fail] {it.url} ")
 
             # txt log (human readable)
             with fail_log.open("a", encoding="utf-8") as f:
