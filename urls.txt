@@ -1,0 +1,9 @@
+/programs/programs/Z_TEST1/source/main?version=inactive
+/programs/programs/Z_TEST2/source/main?version=inactive
+/oo/classes/Z_TESTCLASS/source/main
+/oo/interfaces/ZIF_TEST_IF/source/main
+/programs/includes/Z_TEST_INC/source/main
+/programs/programs/Z_TEST3/source/main?version=inactive
+/programs/includes/LZ_GROUPTESTTOP/source/main
+/programs/includes/LZ_GROUPTESTUXX/source/main
+/programs/includes/LZ_GROUPTESTU01/source/main
