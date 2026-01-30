@@ -6,11 +6,12 @@ import subprocess
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import urlparse, urljoin
-from urllib.parse import urlencode, urlsplit, urlunsplit, parse_qsl
+from urllib.parse import urlparse, urljoin, urlunparse, urlencode, urlsplit, urlunsplit, parse_qsl
 import json
 from datetime import datetime
 import requests
+import shutil
+
 
 # Programm welches eine einzelne ABAP Quelle von einem ADT Server holt,
 # mit abap-cleaner bereinigt und wahlweise lokal speichert (test)
@@ -228,21 +229,40 @@ def read_urls_file(path: Path) -> list[str]:
         urls.append(s)
     return urls
 
-def adt_activate_via_service(session, base: str, obj_url: str, client: str, csrf_token: str, corrnr: str):
-    act_url = base.rstrip("/") + "/activation"
-    act_url = add_query_param(act_url, "method", "activate")
-    act_url = add_query_param(act_url, "corrNr", corrnr)
 
-    # 1) Query weg
+
+def adt_activate_via_service(session, obj_url: str, client: str, csrf_token: str, corrnr: str):
+    """
+    Aktiviert ein ADT-Objekt per zentralem /sap/bc/adt/activation Service.
+    obj_url muss eine ABSOLUTE URL sein, z.B.:
+      https://host:port/sap/bc/adt/programs/programs/Z_TEST1/source/main?version=inactive
+    """
+
+    # 1) Query weg + ggf. /source/main entfernen -> Objekt-Root
     u = obj_url.split("?", 1)[0]
-
-    # 2) aus .../source/main -> Objekt-Root machen
     if "/source/" in u:
         u = u.split("/source/", 1)[0]
 
-    # 3) absolute URL -> nur Pfad (relative ADT-URI)
-    #    Ergebnis z.B.: /sap/bc/adt/programs/programs/Z_TEST1
-    rel_uri = urlparse(u).path
+    p = urlparse(u)
+    if not (p.scheme and p.netloc):
+        raise ValueError(f"obj_url muss absolut sein: {obj_url}")
+
+    # 2) rel_uri für XML: nur der Pfad des Objekt-Roots, z.B. /sap/bc/adt/programs/programs/Z_TEST1
+    rel_uri = p.path
+
+    # 3) Activation-Service-URL auf demselben Host: /sap/bc/adt/activation
+    #    -> Wir nehmen den Prefix bis /sap/bc/adt aus dem Pfad.
+    marker = "/sap/bc/adt"
+    idx = rel_uri.find(marker)
+    if idx < 0:
+        raise ValueError(f"URL enthält nicht {marker}: {obj_url}")
+
+    adt_root_path = rel_uri[: idx + len(marker)]          # /sap/bc/adt
+    act_path = adt_root_path + "/activation"              # /sap/bc/adt/activation
+
+    act_url = urlunparse((p.scheme, p.netloc, act_path, "", "", ""))
+    act_url = add_query_param(act_url, "method", "activate")
+    act_url = add_query_param(act_url, "corrNr", corrnr)
 
     body = f"""<?xml version="1.0" encoding="UTF-8"?>
 <adtcore:objectReferences xmlns:adtcore="http://www.sap.com/adt/core">
@@ -258,11 +278,12 @@ def adt_activate_via_service(session, base: str, obj_url: str, client: str, csrf
     if r.status_code >= 400:
         raise RuntimeError(
             f"ACTIVATION failed {r.status_code} {r.reason}\n"
-            f"URL: {act_url}\n"
+            f"act_url: {act_url}\n"
             f"rel_uri: {rel_uri}\n"
             f"Response body:\n{r.text[:4000]}"
         )
     return r
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -311,7 +332,13 @@ def main():
     base = args.base.rstrip("/")
 
     outdir = Path(args.outdir)
+
+    if outdir.exists():
+        print(f"[info] cleaning output dir: {outdir}")
+        shutil.rmtree(outdir)
+
     outdir.mkdir(parents=True, exist_ok=True)
+
 
     items = build_source_items(base, args.url, args.urls_file)
     if not items:

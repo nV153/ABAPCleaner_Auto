@@ -1,3 +1,0 @@
-https://87.106.51.212:50001/sap/bc/adt/programs/includes/LZ_GROUPTESTTOP/source/main
-https://87.106.51.212:50001/sap/bc/adt/programs/includes/LZ_GROUPTESTUXX/source/main
-https://87.106.51.212:50001/sap/bc/adt/programs/includes/LZ_GROUPTESTU01/source/main
