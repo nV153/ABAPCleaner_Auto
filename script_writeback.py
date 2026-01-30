@@ -12,6 +12,8 @@ from datetime import datetime
 import requests
 import shutil
 
+import urllib3
+
 
 # Programm welches eine einzelne ABAP Quelle von einem ADT Server holt,
 # mit abap-cleaner bereinigt und wahlweise lokal speichert (test)
@@ -323,6 +325,9 @@ def main():
     )
 
     args = ap.parse_args()
+
+    if args.insecure:
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     user = os.getenv("SAP_USER")
     pw = os.getenv("SAP_PASS")

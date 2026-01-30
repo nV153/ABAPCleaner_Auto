@@ -1,0 +1,30 @@
+# Output directory (generated files)
+outputs/
+out/
+output/
+
+# Generated ABAP files
+*.abap
+
+# Failure / retry logs
+failures_*.txt
+failures_*.jsonl
+retry_urls_*.txt
+
+# Temporary files
+*.tmp
+*.log
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
