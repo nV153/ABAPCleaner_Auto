@@ -32,14 +32,8 @@ def safe_filename(s: str) -> str:
 
 
 def run_cmd(cmd: list[str]) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False
-    )
+    # bytes in stdout/stderr
+    return subprocess.run(cmd, capture_output=True, check=False)
 
 
 def run_cleaner(cleaner_exe: str, profile: Path, release: str, source: str) -> str:
@@ -60,30 +54,63 @@ def run_cleaner(cleaner_exe: str, profile: Path, release: str, source: str) -> s
             "--release", str(release),
         ]
         res = run_cmd(cmd)
-        if res.returncode != 0:
-            raise RuntimeError(f"Cleaner failed rc={res.returncode}\n{res.stderr}\n{res.stdout}")
 
-        out = (res.stdout or "")
+        # stderr/stdout: bytes -> str
+        stderr_b = res.stderr or b""
+        stdout_b = res.stdout or b""
+
+        def decode_best(b: bytes) -> str:
+            try:
+                return b.decode("utf-8")
+            except UnicodeDecodeError:
+                return b.decode("cp1252", errors="replace")
+
+        stderr_s = decode_best(stderr_b)
+        stdout_s = decode_best(stdout_b)
+
+        if res.returncode != 0:
+            raise RuntimeError(f"Cleaner failed rc={res.returncode}\n{stderr_s}\n{stdout_s}")
+
+        out = stdout_s
         if not out.strip():
-            raise RuntimeError(f"Cleaner returned empty output.\nSTDERR:\n{res.stderr[:800]}")
+            raise RuntimeError(f"Cleaner returned empty output.\nSTDERR:\n{stderr_s[:800]}")
+
         return out
 
 
+
 def headers(client: str, accept: str) -> dict:
-    return {"sap-client": client, "Accept": accept, "User-Agent": "adt-client"}
+    return {
+        "sap-client": client,
+        "Accept": accept,
+        "Accept-Charset": "utf-8",
+        "User-Agent": "adt-client",
+    }
 
 
 def adt_get_text_and_etag(session: requests.Session, url: str, client: str) -> tuple[str, str | None]:
-    # ADT source endpoints usually work with text/plain, */*
     r = session.get(url, headers=headers(client, "text/plain, */*"))
     r.raise_for_status()
-    return r.text, r.headers.get("ETag")
+
+    # NICHT r.text benutzen -> kann falsch decodieren
+    raw = r.content  # bytes
+
+    # ADT Source ist i.d.R. UTF-8
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        # Fallback: BOM / oder notfalls Latin-1 (nur damit du was siehst)
+        text = raw.decode("utf-8-sig", errors="replace")
+
+    return text, r.headers.get("ETag")
+
 
 
 def fetch_csrf_token(session: requests.Session, any_adt_url: str, client: str) -> str:
     h = headers(client, "text/plain, */*")
     h["X-CSRF-Token"] = "Fetch"
     r = session.get(any_adt_url, headers=h)
+    r.encoding = "utf-8"
     r.raise_for_status()
     token = r.headers.get("X-CSRF-Token") or r.headers.get("x-csrf-token")
     if not token:
@@ -93,6 +120,7 @@ def fetch_csrf_token(session: requests.Session, any_adt_url: str, client: str) -
 
 def adt_put_text(session: requests.Session, url: str, client: str, text: str, csrf_token: str, etag: str | None):
     h = headers(client, "application/vnd.sap.adt.errors+xml, text/plain, */*")
+    h = headers(client, "text/plain, */*")
     h["Content-Type"] = "text/plain; charset=utf-8"
     h["X-CSRF-Token"] = csrf_token
     h["If-Match"] = etag if etag else "*"
