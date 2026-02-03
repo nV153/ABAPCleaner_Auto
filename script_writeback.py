@@ -92,14 +92,12 @@ def adt_get_text_and_etag(session: requests.Session, url: str, client: str) -> t
     r = session.get(url, headers=headers(client, "text/plain, */*"))
     r.raise_for_status()
 
-    # NICHT r.text benutzen -> kann falsch decodieren
     raw = r.content  # bytes
 
     # ADT Source ist i.d.R. UTF-8
     try:
         text = raw.decode("utf-8")
     except UnicodeDecodeError:
-        # Fallback: BOM / oder notfalls Latin-1 (nur damit du was siehst)
         text = raw.decode("utf-8-sig", errors="replace")
 
     return text, r.headers.get("ETag")
@@ -119,7 +117,6 @@ def fetch_csrf_token(session: requests.Session, any_adt_url: str, client: str) -
 
 
 def adt_put_text(session: requests.Session, url: str, client: str, text: str, csrf_token: str, etag: str | None):
-    h = headers(client, "application/vnd.sap.adt.errors+xml, text/plain, */*")
     h = headers(client, "text/plain, */*")
     h["Content-Type"] = "text/plain; charset=utf-8"
     h["X-CSRF-Token"] = csrf_token
